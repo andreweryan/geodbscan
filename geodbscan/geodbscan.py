@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 from sklearn import metrics
 from sklearn.cluster import DBSCAN
 
@@ -21,7 +22,7 @@ def get_centroid(cluster):
 
 
 def geodbscan(
-    df,
+    src,
     lat_col="latitude",
     lon_col="longitude",
     epsilon=100,
@@ -31,7 +32,7 @@ def geodbscan(
 ):
     """
     Args:
-        df (pd.DataFrame): Pandas DataFrame of geospatial points to cluster
+        src (str, pd.DataFrame): Filepath or Pandas DataFrame of geospatial points to cluster
         epsilon (int): Max distance between two points to be considered in the neighborhood
         min_points (int): Min number of points required to constitute a cluster
         unit (str): Earth unit for Haversine distance metric.
@@ -39,6 +40,27 @@ def geodbscan(
     Returns:
         cluster_outputs (pd.DataFrame) : DataFrame with label of cluster each point is assigned to. Currently, points identified as noise (cluster -1) are removed as they did not meet the criteria for a cluster
     """
+
+    if isinstance(src, pd.DataFrame):
+        df = src
+    elif isinstance(src, gpd.GeoDataFrame):
+        df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
+        df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
+        df = pd.DataFrame(df)
+    elif isinstance(src, str) and src.endswith((".GeoJSON", ".geojson")):
+        df = gpd.read_file(src)
+        df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
+        df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
+        df = pd.DataFrame(df)
+    elif isinstance(src, str) and src.endswith((".parquet")):
+        df = gpd.read_parquet(src)
+        df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
+        df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
+        df = pd.DataFrame(df)
+    elif isinstance(src, str) and src.endswith((".CSV", ".csv")):
+        df = pd.read_csv(src)
+    else:
+        raise ValueError("Source data not found or data reader not implemented.")
 
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
