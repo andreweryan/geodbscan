@@ -94,7 +94,7 @@ def geodbscan(
     num_clusters = len(set(dbsc.labels_))
 
     print(
-        f"Clustered {len(df)} points to {num_clusters} clusters for {100*(1 - float(num_clusters) / len(df))} compression"
+        f"Clustered {len(df)} points to {num_clusters} clusters for {round(100*(1 - float(num_clusters) / len(df)), 1)}% compression"
     )
 
     """
