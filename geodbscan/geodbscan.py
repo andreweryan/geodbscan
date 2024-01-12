@@ -25,16 +25,17 @@ def geodbscan(
     lat_col="latitude",
     lon_col="longitude",
     epsilon=100,
-    min_samples=10,
+    min_points=10,
     unit="meters",
     out_dir=None,
 ):
     """
     Args:
         df (pd.DataFrame): Pandas DataFrame of geospatial points to cluster
-        epsilon (float): Max distance between two points to be considered in the neighborhood
-        min_samples (int): Min number of points required to constitute a cluster
+        epsilon (int): Max distance between two points to be considered in the neighborhood
+        min_points (int): Min number of points required to constitute a cluster
         unit (str): Earth unit for Haversine distance metric.
+        out_dir (str): Directory path to write output files to.
     Returns:
         cluster_outputs (pd.DataFrame) : DataFrame with label of cluster each point is assigned to. Currently, points identified as noise (cluster -1) are removed as they did not meet the criteria for a cluster
     """
@@ -58,7 +59,7 @@ def geodbscan(
     coordinates = df[[lat_col, lon_col]].values
 
     dbsc = DBSCAN(
-        eps=eps, min_samples=min_samples, algorithm="ball_tree", metric="haversine"
+        eps=eps, min_samples=min_points, algorithm="ball_tree", metric="haversine"
     ).fit(np.radians(coordinates))
 
     cluster_labels = dbsc.labels_
