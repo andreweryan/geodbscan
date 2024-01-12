@@ -1,15 +1,29 @@
 # GeoDBSCAN: Implementing the DBSCAN clustering algorithm for geospatial coordinates
 
 Task List
-- [ ] Update README with installation, usage, etc.
+- [x] Update README with installation, usage, etc.
 - [x] Change geodbscan function args to accept df or filepath
 - [x] Change function to accept multiple file types beyond CSV
 - [ ] Export clustered points to GeoJSON, parquet, etc. 
 - [ ] Write unit tests
-- [ ] Write CLI
+- [x] Write CLI
 
 ## Installation:
+GeoDBSCAN relies on GDAL and associated geospatial packages such as geopandas, etc.
+Depending on your OS and development environment, the installation of those packages varies with 
+Windows being more challenging (but not impossible). Because of these complexities around
+installing GDAL on Windows, Linux is the preferred OS for installation.
 
+## Linux Installation:
+On Linux, install GDAL using `apt-get` and add GDAL to your environment path
+```
+sudo apt-get install gdal-bin -y
+sudo apt-get install libgdal-dev -y
+export CPLUS_INCLUDE_PATH=/usr/include/gdal
+export C_INCLUDE_PATH=/usr/include/gdal
+```
+
+Create and activate a new conda (or venv) environment and pip install the remainder of the dependencies using `pip install -r requirements.txt`
 
 ## Usage:
 
