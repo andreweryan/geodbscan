@@ -1,7 +1,13 @@
+affine
+Fiona
+GeoAlchemy2
+geopandas
+google-cloud-storage
 matplotlib
 numba
 numpy
 pandas
 Pillow
+shapely
 sqlalchemy
 tqdm

@@ -1,23 +1,18 @@
-# Python Repo template
-
-List
-- Item 1
-- Item 2
-- Item 3
+# GeoDBSCAN: Implementing the DBSCAN clustering algorithm for geospatial coordinates
 
 Task List
-- [x] Task 1
-- [ ] Task 2
-- [x] Task 3
-
-Numbered List
-1. Item 1
-2. Item 2
-3. Item 3
+- [ ] Update README with installation, usage, etc.
+- [ ] Change geodbscan function args to accept df or filepath
+- [ ] Export clustered points to GeoJSON, parquet, etc. 
+- [ ] Write unit tests
+- [ ] Write CLI
 
 ```python
+import pandas as pd
+from geodbscan import geodbscan
 
-def main():
-    print("Hello, World!")
+df = pd.read_csv(r'test_points.csv')
+out_dir = r'dbscan_output'
+geodbscan(df, lat_col='X', lon_col='Y', epsilon=50, min_samples=5, unit='meters', out_dir=out_dir)
 
 ```

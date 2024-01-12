@@ -2,14 +2,14 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name="package name",
+    name="geodbscan",
     version="0.0.1",
     author="Andrew Ryan",
     author_email="aryanvt15@proton.me",
-    description="Tool decription",
+    description="Implementation of DBSCAN for use with geospatial data.",
     packages=find_packages(),
     entry_points={
-        "console_scripts": ["package = package.cli:main"],
+        "console_scripts": ["geodbscan = geodbscan.cli:main"],
     },
     install_requires=[
         "numpy",
@@ -23,6 +23,5 @@ setup(
         "numba",
         "psycopg2-binary",
         "sqlalchemy",
-        "google-cloud-storage",
     ],
 )

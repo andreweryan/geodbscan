@@ -1,1 +1,1 @@
-from package import function
+from geodbscan import geodbscan

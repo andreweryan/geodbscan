@@ -1,2 +1,2 @@
 import unittest
-from package.main import function
+from geodbscan.geodbscan import function
