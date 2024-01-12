@@ -5,6 +5,10 @@ import geopandas as gpd
 from sklearn import metrics
 from sklearn.cluster import DBSCAN
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 
 def get_centroid(cluster):
     """
@@ -52,6 +56,7 @@ def geodbscan(
         df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
         df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
         df = pd.DataFrame(df)
+        print(df.head())
     elif isinstance(src, str) and src.endswith((".parquet")):
         df = gpd.read_parquet(src)
         df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
@@ -89,28 +94,22 @@ def geodbscan(
     num_clusters = len(set(dbsc.labels_))
 
     print(
-        f"Clustered {len(df)} points to {num_clusters} for {100*(1 - float(num_clusters) / len(df))} compression"
+        f"Clustered {len(df)} points to {num_clusters} clusters for {100*(1 - float(num_clusters) / len(df))} compression"
     )
 
     """
     Silhouette Coefficient:
     This metric is bounded between -1 (poor clustering) and +1 (good clustering). Scores around 0 indicate overlapping clusters.
     """
-    print(
-        "Silhouette coefficient: {:0.03f}".format(
-            metrics.silhouette_score(coordinates, cluster_labels)
-        )
-    )
+    s_coef = metrics.silhouette_score(coordinates, cluster_labels)
+    print(f"Silhouette coefficient: {round(s_coef, 4)}")
 
     """
     Calinski-Harabaz Score:
     The score is higher when clusters are dense and well separated, which relates to a standard concept of a cluster.
     """
-    print(
-        "Calinski-Harabaz Score: {:0.03f}".format(
-            metrics.calinski_harabasz_score(coordinates, cluster_labels)
-        )
-    )
+    ch_score = metrics.calinski_harabasz_score(coordinates, cluster_labels)
+    print(f"Calinski-Harabaz Score: {round(ch_score, 4)}")
 
     # # Turn the clusters into a pandas series,where each element is a cluster of points
     dbsc_clusters = pd.Series(

@@ -42,4 +42,4 @@ optional arguments:
   --out_dir OUT_DIR     Directory path to write output files to.
 ```
 
-Example: `geodbscan --src test_points.csv --lat_col Latitude --lon_col Longitude --epsilon 100 --min_points 10 --unit meters --out_dir dbscan_outputs`
+Example: `geodbscan --src C:\Users\andrr\Desktop\test_points.geojson --lat_col Latitude --lon_col Longitude --epsilon 50 --min_points 5 --unit meters --out_dir C:\Users\andrr\Desktop\dbscan_outputs`
