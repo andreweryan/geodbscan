@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from sklearn import metrics
+from datetime import datetime
 from sklearn.cluster import DBSCAN
 
 import warnings
@@ -48,19 +49,23 @@ def geodbscan(
     if isinstance(src, pd.DataFrame):
         df = src
     elif isinstance(src, gpd.GeoDataFrame):
-        df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
-        df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
+        df = src
+        if not df.columns.isin([lat_col, lon_col]).any():
+            df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
+            df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
         df = pd.DataFrame(df)
     elif isinstance(src, str) and src.endswith((".GeoJSON", ".geojson")):
         df = gpd.read_file(src)
-        df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
-        df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
+        if not df.columns.isin([lat_col, lon_col]).any():
+            df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
+            df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
         df = pd.DataFrame(df)
         print(df.head())
     elif isinstance(src, str) and src.endswith((".parquet")):
         df = gpd.read_parquet(src)
-        df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
-        df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
+        if not df.columns.isin([lat_col, lon_col]).any():
+            df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
+            df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
         df = pd.DataFrame(df)
     elif isinstance(src, str) and src.endswith((".CSV", ".csv")):
         df = pd.read_csv(src)
@@ -85,33 +90,22 @@ def geodbscan(
 
     coordinates = df[[lat_col, lon_col]].values
 
+    start_time = datetime.now()
+    print(f"Starting DBSCAN at {start_time}")
+
     dbsc = DBSCAN(
         eps=eps, min_samples=min_points, algorithm="ball_tree", metric="haversine"
     ).fit(np.radians(coordinates))
 
-    cluster_labels = dbsc.labels_
+    end_time = datetime.now()
+    print(f"DBSCAN finished in {end_time - start_time}, starting post-processing.")
 
+    cluster_labels = dbsc.labels_
     num_clusters = len(set(dbsc.labels_))
 
-    print(
-        f"Clustered {len(df)} points to {num_clusters} clusters for {round(100*(1 - float(num_clusters) / len(df)), 1)}% compression"
-    )
+    print(f"Clustered {len(df)} points to {num_clusters} clusters.")
 
-    """
-    Silhouette Coefficient:
-    This metric is bounded between -1 (poor clustering) and +1 (good clustering). Scores around 0 indicate overlapping clusters.
-    """
-    s_coef = metrics.silhouette_score(coordinates, cluster_labels)
-    print(f"Silhouette coefficient: {round(s_coef, 4)}")
-
-    """
-    Calinski-Harabaz Score:
-    The score is higher when clusters are dense and well separated, which relates to a standard concept of a cluster.
-    """
-    ch_score = metrics.calinski_harabasz_score(coordinates, cluster_labels)
-    print(f"Calinski-Harabaz Score: {round(ch_score, 4)}")
-
-    # # Turn the clusters into a pandas series,where each element is a cluster of points
+    # # Turn the clusters into a pandas series, where each element is a cluster of points
     dbsc_clusters = pd.Series(
         [coordinates[cluster_labels == n] for n in range(num_clusters)]
     )
@@ -122,30 +116,36 @@ def geodbscan(
     # # Unzip the list of centroid points (lat, long) tuples into separate lat and long lists
     cent_lats, cent_longs = zip(*centroids)
 
+    # # Filter out the noise (points not assigned to a cluster), Output data with cluster assignments
+    df["cluster_label"] = cluster_labels
+    df_filtered = df[cluster_labels > -1]  # -1 is noise
+    cluster_outputs = gpd.GeoDataFrame(
+        df_filtered,
+        geometry=gpd.points_from_xy(df_filtered[lon_col], df_filtered[lat_col]),
+        crs="EPSG:4326",
+    )
+    cluster_geojson_path = os.path.join(out_dir, "cluster_outputs.geojson")
+    cluster_outputs.to_file(cluster_geojson_path)
+
+    # # get cluster counts
+    cluster_counts = pd.DataFrame(df["cluster_label"].value_counts(), columns=["count"])
+    cluster_counts.reset_index(inplace=True)
+    cluster_counts = cluster_counts[cluster_counts["cluster_label"] > -1]
+    cluster_counts["cluster_label"] = cluster_counts["cluster_label"].astype(int)
+    cluster_counts.sort_values(by="cluster_label", ascending=True, inplace=True)
+
     # # Create a new df of one representative point for each cluster
     centroids_df = pd.DataFrame({"longitude": cent_longs, "latitude": cent_lats})
-    centroid_path = os.path.join(out_dir, "cluster_counts.csv")
-    centroids_df.to_csv(
-        centroid_path,
-        index=True,
-        index_label=["cluster_label"],
-        header=[lat_col, lon_col],
-    )  # need to export to geospatial format
-
-    # # Filter out the noise (points not assigned to a cluster)
-    df["cluster_labels"] = cluster_labels
-    cluster_counts = df["cluster_labels"].value_counts()
-    count_path = os.path.join(out_dir, "cluster_counts.csv")
-    cluster_counts.to_csv(
-        count_path, index=True, index_label=["cluster_label"], header=["count"]
+    centroids_df.index.rename("cluster_label", inplace=True)
+    centroids_df.reset_index(inplace=True)
+    centroids_df["cluster_label"] = centroids_df["cluster_label"].astype(int)
+    centroids_df = pd.merge(centroids_df, cluster_counts, on="cluster_label")
+    centroids_gdf = gpd.GeoDataFrame(
+        centroids_df,
+        geometry=gpd.points_from_xy(centroids_df[lon_col], centroids_df[lat_col]),
+        crs="EPSG:4326",
     )
-
-    # # Output data with cluster assignments
-    df_filtered = df[cluster_labels > -1]  # -1 is noise
-    cluster_outputs = pd.DataFrame(df_filtered)
-    cluster_path = os.path.join(out_dir, "cluster_outputs.csv")
-    cluster_outputs.to_csv(
-        cluster_path, index=False, header=True
-    )  # need to export to geospatial format
+    centroid_geojson_path = os.path.join(out_dir, "cluster_centroids.geojson")
+    centroids_gdf.to_file(centroid_geojson_path)
 
     return cluster_outputs
