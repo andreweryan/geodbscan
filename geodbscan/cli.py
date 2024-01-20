@@ -47,6 +47,13 @@ def main():
         help="Earth unit for Haversine distance metric.",
     ),
     parser.add_argument(
+        "--workers",
+        type=int,
+        default=-1,
+        required=True,
+        help="Number of processors to use.",
+    ),
+    parser.add_argument(
         "--out_dir",
         required=True,
         help="Directory path to write output files to.",
@@ -61,6 +68,7 @@ def main():
         epsilon=args.epsilon,
         min_points=args.min_points,
         unit=args.unit,
+        workers=args.workers,
         out_dir=args.out_dir,
     )
 

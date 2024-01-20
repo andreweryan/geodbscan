@@ -33,6 +33,7 @@ def geodbscan(
     epsilon=100,
     min_points=10,
     unit="meters",
+    workers=-1,
     out_dir=None,
 ):
     """
@@ -41,6 +42,7 @@ def geodbscan(
         epsilon (int): Max distance between two points to be considered in the neighborhood
         min_points (int): Min number of points required to constitute a cluster
         unit (str): Earth unit for Haversine distance metric.
+        workers (int): Number of processors to use.
         out_dir (str): Directory path to write output files to.
     Returns:
         cluster_outputs (pd.DataFrame) : DataFrame with label of cluster each point is assigned to. Currently, points identified as noise (cluster -1) are removed as they did not meet the criteria for a cluster
@@ -60,7 +62,6 @@ def geodbscan(
             df = pd.concat([df, df.centroid.x, df.centroid.y], axis=1)
             df.rename({0: lat_col, 1: lon_col}, axis=1, inplace=True)
         df = pd.DataFrame(df)
-        print(df.head())
     elif isinstance(src, str) and src.endswith((".parquet")):
         df = gpd.read_parquet(src)
         if not df.columns.isin([lat_col, lon_col]).any():
@@ -94,7 +95,11 @@ def geodbscan(
     print(f"Starting DBSCAN at {start_time}")
 
     dbsc = DBSCAN(
-        eps=eps, min_samples=min_points, algorithm="ball_tree", metric="haversine"
+        eps=eps,
+        min_samples=min_points,
+        algorithm="ball_tree",
+        metric="haversine",
+        n_jobs=workers,
     ).fit(np.radians(coordinates))
 
     end_time = datetime.now()
