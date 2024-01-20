@@ -35,6 +35,7 @@ def geodbscan(
     unit="meters",
     workers=-1,
     out_dir=None,
+    export_format="parquet",
 ):
     """
     Args:
@@ -44,6 +45,7 @@ def geodbscan(
         unit (str): Earth unit for Haversine distance metric.
         workers (int): Number of processors to use.
         out_dir (str): Directory path to write output files to.
+        export_format (str): Format of output files (parquet or geojson), default=parquet (geoparquet)
     Returns:
         cluster_outputs (pd.DataFrame) : DataFrame with label of cluster each point is assigned to. Currently, points identified as noise (cluster -1) are removed as they did not meet the criteria for a cluster
     """
@@ -129,8 +131,12 @@ def geodbscan(
         geometry=gpd.points_from_xy(df_filtered[lon_col], df_filtered[lat_col]),
         crs="EPSG:4326",
     )
-    cluster_geojson_path = os.path.join(out_dir, "cluster_outputs.geojson")
-    cluster_outputs.to_file(cluster_geojson_path)
+    if export_format == "parquet":
+        cluster_parquet_path = os.path.join(out_dir, "cluster_outputs.parquet")
+        cluster_outputs.to_parquet(cluster_parquet_path)
+    else:
+        cluster_geojson_path = os.path.join(out_dir, "cluster_outputs.geojson")
+        cluster_outputs.to_file(cluster_geojson_path)
 
     # # get cluster counts
     cluster_counts = pd.DataFrame(df["cluster_label"].value_counts(), columns=["count"])
@@ -150,7 +156,11 @@ def geodbscan(
         geometry=gpd.points_from_xy(centroids_df[lon_col], centroids_df[lat_col]),
         crs="EPSG:4326",
     )
-    centroid_geojson_path = os.path.join(out_dir, "cluster_centroids.geojson")
-    centroids_gdf.to_file(centroid_geojson_path)
+    if export_format == "parquet":
+        centroid_parquet_path = os.path.join(out_dir, "cluster_centroids.parquet")
+        centroids_gdf.to_parquet(centroid_parquet_path)
+    else:
+        centroid_geojson_path = os.path.join(out_dir, "cluster_centroids.geojson")
+        centroids_gdf.to_file(centroid_geojson_path)
 
     return cluster_outputs

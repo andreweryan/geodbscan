@@ -50,13 +50,18 @@ def main():
         "--workers",
         type=int,
         default=-1,
-        required=True,
         help="Number of processors to use.",
     ),
     parser.add_argument(
         "--out_dir",
         required=True,
         help="Directory path to write output files to.",
+    )
+    parser.add_argument(
+        "--export_format",
+        type=str,
+        choices=["parquet", "geojson"],
+        help="Format of output files, default='parquet'",
     )
 
     args = parser.parse_args()
@@ -70,6 +75,7 @@ def main():
         unit=args.unit,
         workers=args.workers,
         out_dir=args.out_dir,
+        export_format=args.export_format,
     )
 
 
