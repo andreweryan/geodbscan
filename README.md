@@ -4,7 +4,7 @@ Task List
 - [x] Update README with installation, usage, etc.
 - [x] Change geodbscan function args to accept df or filepath
 - [x] Change function to accept multiple file types beyond CSV
-- [ ] Export clustered points to GeoJSON, parquet, etc. 
+- [x] Export clustered points to GeoJSON, parquet, etc. 
 - [ ] Write unit tests
 - [x] Write CLI
 
