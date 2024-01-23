@@ -78,18 +78,19 @@ def geodbscan(
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
-    if unit == "miles":
-        units = 3959.87433
-    elif unit == "feet":
-        units = 20908136.4624
-    elif unit == "kilometers":
-        units = 6372.8
-    elif unit == "meters":
-        units = 6372800
-    else:
+    earth_radius = {
+        "kilometers": 6371.009,
+        "meters": 6371009,
+        "miles": 3958.7614581,
+        "feet": 20902260.49876800925,
+    }
+
+    r = earth_radius.get(unit)
+
+    if not r:
         raise ValueError("Units not specified.")
 
-    eps = epsilon / units
+    eps = epsilon / r
 
     coordinates = df[[lat_col, lon_col]].values
 
