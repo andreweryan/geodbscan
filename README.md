@@ -1,4 +1,5 @@
 # GeoDBSCAN: Implementing the DBSCAN clustering algorithm for geospatial coordinates
+## 🤝 Contributing
 
 Task List
 - [x] Update README with installation, usage, etc.
